@@ -12,6 +12,8 @@ Camera - https://smile.amazon.com/Amcrest-Security-Waterproof-5-Megapixel-IP5M-B
 
 Power Adapter - https://smile.amazon.com/Baosity-Passive-Ethernet-Splitter-Waterproof/dp/B07HG6XCKX/
 
+Total cost: ~ $65
+
 ### Service format
 
 After the camera has been connected to your node, create a service on that node with your preferred name ("Cam" is popular),
