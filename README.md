@@ -3,7 +3,7 @@ AREDN Amcrest CAM support
 
 This package add support for an AREDN "snapshot" feature for Amcrest camera.
 
-Uniquiti camera have a simple, public, snapshot feature which makes them easy to use as AREDN services. This
+Ubiquiti camera have a simple, public, snapshot feature which makes them easy to use as AREDN services. This
 package allows the same for Amcrest cameras which don't natively support this.
 
 ### Typical Camera
