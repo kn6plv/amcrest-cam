@@ -1,0 +1,10 @@
+Package: amcrest-cam
+Version: 0.1
+Depends:
+Provides:
+Source: package/amcrest-cam
+Section: misc
+Priority: optional
+Maintainer: Tim Wilkinson (KN6PLV)
+Architecture: all
+Description: Snapshot functionality for Amcrest Cameras

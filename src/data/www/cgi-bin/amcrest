@@ -1,0 +1,91 @@
+#!/usr/bin/lua
+--[[
+
+    Copyright (C) 2022 Tim Wilkinson
+    See Contributors file for additional contributors
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation version 3 of the License.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    Additional Terms:
+
+    Additional use restrictions exist on the AREDN(TM) trademark and logo.
+            See AREDNLicense.txt for more info.
+
+    Attributions to the AREDN Project must be retained in the source code.
+    If importing this code into a new or existing project attribution
+    to the AREDN project must be added to the source code.
+
+    You must not misrepresent the origin of the material contained within.
+
+    Modified versions must be modified to attribute to the original source
+    and be marked in reasonable ways as differentiate it from the original
+    version
+
+--]]
+
+local http = require("socket.http")
+local ltn12 = require("ltn12")
+
+local function hash(str)
+    return io.popen("echo -n '" .. str .. "' | md5sum -"):read("*a"):match("^%S+")
+end
+
+local cam, username, password = (os.getenv("QUERY_STRING") or ""):match("^(.*)/(.*)/(.*)$")
+local url = "http://" .. cam .. "/cgi-bin/snapshot.cgi"
+
+local body = {}
+local _, code, headers = http.request({
+    url = url,
+    sink = ltn12.sink.table(body)
+})
+local authenticate = headers["www-authenticate"]
+if code == 401 and authenticate then
+    local realm = authenticate:match('realm="([^"]+)')
+    local nonce = authenticate:match('nonce="([^"]+)')
+    local opaque = authenticate:match('opaque="([^"]+)')
+    local cnonce = string.format("%08x", os.time())
+    local path = url:match("//[^/]+(.+)$")
+    local response = hash(hash(username .. ":" .. realm .. ":" .. password) .. ":" .. nonce .. ":00000001:" .. cnonce .. ":auth:" .. hash("GET:" .. path))
+    local digest = 'Digest username="' .. username .. '", realm="' .. realm .. '", nonce="' .. nonce .. '", uri="' .. path .. '", cnonce="' .. cnonce .. '", nc=00000001, qop=auth, algorithm="MD5", response="' .. response .. '"'
+    if opaque then
+        digest = digest .. ', opaque="' .. opaque .. '"'
+    end
+    _, code, headers = http.request({
+        url = url,
+        headers = {
+            authorization = digest
+        },
+        sink = ltn12.sink.table(body)
+    })
+end
+
+if code == 200 then
+    print "Content-Type: image/jpeg\r"
+    print "Cache-Control: no-store\r"
+    print "Access-Control-Allow-Origin: *\r"
+    local length = headers["content-length"]
+    if length then
+        print("Content-Length: " .. length .. "\r")
+    end
+    print "\r"
+    for _, v in ipairs(body)
+    do
+        io.write(v)
+    end
+else
+    print "Content-Type: text/plain"
+    print "Cache-Control: no-store\r"
+    print "Access-Control-Allow-Origin: *\r"
+    print "\r"
+    print("Error: " .. code)
+end
